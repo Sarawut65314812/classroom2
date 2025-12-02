@@ -1,0 +1,104 @@
+.matching-board-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.matching-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 20px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.matching-header h2 {
+  font-size: 1.8rem;
+  color: #333;
+  margin: 0;
+}
+
+.score-display {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #667eea;
+  background: #f0f0f0;
+  padding: 10px 24px;
+  border-radius: 12px;
+}
+
+.canvas-container {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+  display: flex;
+  justify-content: center;
+  overflow-x: auto;
+}
+
+.success-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+.success-message {
+  background: white;
+  border-radius: 24px;
+  padding: 50px 60px;
+  text-align: center;
+  box-shadow: 0 16px 64px rgba(0,0,0,0.3);
+}
+
+.success-icon {
+  font-size: 6rem;
+  margin-bottom: 20px;
+  animation: bounce 0.5s ease infinite alternate;
+}
+
+.success-message h2 {
+  font-size: 3rem;
+  color: #333;
+  margin-bottom: 16px;
+}
+
+.success-message p {
+  font-size: 1.5rem;
+  color: #666;
+}
+
+@keyframes bounce {
+  from { transform: translateY(0); }
+  to { transform: translateY(-10px); }
+}
+
+@media (max-width: 768px) {
+  .canvas-container {
+    overflow-x: scroll;
+  }
+  
+  .success-message {
+    padding: 30px 40px;
+  }
+  
+  .success-icon {
+    font-size: 4rem;
+  }
+  
+  .success-message h2 {
+    font-size: 2rem;
+  }
+}

@@ -1,0 +1,85 @@
+.app-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.home-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.home-title {
+  font-size: 3.5rem;
+  color: white;
+  text-align: center;
+  margin-bottom: 60px;
+  text-shadow: 2px 2px 8px rgba(0,0,0,0.2);
+  animation: fadeIn 0.5s ease;
+}
+
+.game-cards {
+  display: flex;
+  gap: 40px;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 1200px;
+}
+
+.game-card {
+  background: white;
+  border-radius: 24px;
+  padding: 40px;
+  width: 320px;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+}
+
+.game-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 48px rgba(0,0,0,0.2);
+}
+
+.game-icon {
+  font-size: 5rem;
+  margin-bottom: 20px;
+}
+
+.game-card h2 {
+  font-size: 1.8rem;
+  color: #333;
+  margin-bottom: 12px;
+}
+
+.game-card p {
+  color: #666;
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+.teacher-link {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: rgba(255,255,255,0.9);
+  padding: 12px 24px;
+  border-radius: 12px;
+  text-decoration: none;
+  color: #667eea;
+  font-weight: 600;
+  font-size: 1.1rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+}
+
+.teacher-link:hover {
+  background: white;
+  transform: scale(1.05);
+}
