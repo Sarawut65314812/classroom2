@@ -2,6 +2,7 @@ import { useRef, useState, useEffect } from 'react'
 import { Stage, Layer, Line, Image as KonvaImage } from 'react-konva'
 import Toolbox from '../../components/Toolbox'
 import { audioManager } from '../../utils/audio'
+import { getImages } from '../../services/storage'
 import './PlayColoring.css'
 
 interface LineData {
@@ -18,15 +19,15 @@ function PlayColoring() {
   const [image, setImage] = useState<HTMLImageElement | null>(null)
   const [showOutline, setShowOutline] = useState(true)
   const [isEraser, setIsEraser] = useState(false)
+  const [coloringImages, setColoringImages] = useState<any[]>([])
+  const [isStarted, setIsStarted] = useState(false)
+  const [canvasSize, setCanvasSize] = useState({ width: 1200, height: 800 })
   const stageRef = useRef<any>(null)
 
   useEffect(() => {
-    // Load default image
-    const img = new window.Image()
-    img.src = 'https://via.placeholder.com/600x400/FFFFFF/000000?text=Upload+Image'
-    img.onload = () => {
-      setImage(img)
-    }
+    // Load images from teacher
+    const images = getImages().filter(img => img.category === 'coloring')
+    setColoringImages(images)
   }, [])
 
   const handleMouseDown = (e: any) => {
@@ -87,21 +88,118 @@ function PlayColoring() {
         const img = new window.Image()
         img.src = event.target?.result as string
         img.onload = () => {
+          // คำนวณขนาด canvas ให้เต็มพื้นที่แต่คงสัดส่วน
+          const maxWidth = 1200
+          const maxHeight = 800
+          let newWidth = img.width
+          let newHeight = img.height
+
+          // คำนวณ ratio เพื่อปรับขนาดให้พอดีกับ canvas
+          const ratio = Math.min(maxWidth / newWidth, maxHeight / newHeight)
+          newWidth = newWidth * ratio
+          newHeight = newHeight * ratio
+
+          setCanvasSize({ width: newWidth, height: newHeight })
           setImage(img)
           setLines([]) // Clear existing drawing
+          setIsStarted(true)
         }
       }
       reader.readAsDataURL(file)
     }
   }
 
+  const handleSelectImage = (imageUrl: string) => {
+    const img = new window.Image()
+    img.src = imageUrl
+    img.onload = () => {
+      // คำนวณขนาด canvas ให้เต็มพื้นที่แต่คงสัดส่วน
+      const maxWidth = 1200
+      const maxHeight = 800
+      let newWidth = img.width
+      let newHeight = img.height
+
+      // คำนวณ ratio เพื่อปรับขนาดให้พอดีกับ canvas
+      const ratio = Math.min(maxWidth / newWidth, maxHeight / newHeight)
+      newWidth = newWidth * ratio
+      newHeight = newHeight * ratio
+
+      setCanvasSize({ width: newWidth, height: newHeight })
+      setImage(img)
+      setLines([])
+      setIsStarted(true)
+      audioManager.playClick()
+    }
+  }
+
+  if (!isStarted) {
+    return (
+      <div className="coloring-page">
+        <div className="coloring-header">
+          <h1>🎨 ระบายสี</h1>
+          <button className="back-btn" onClick={() => window.history.back()}>
+            ← กลับ
+          </button>
+        </div>
+
+        <div className="coloring-setup">
+          {coloringImages.length > 0 && (
+            <div className="setup-section">
+              <h2>🖼️ เลือกรูปจากครู</h2>
+              <div className="image-gallery">
+                {coloringImages.map(img => (
+                  <div 
+                    key={img.id} 
+                    className="gallery-item"
+                    onClick={() => handleSelectImage(img.url)}
+                  >
+                    <img src={img.url} alt={img.name} />
+                    <span>{img.name}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="divider">หรือ</div>
+            </div>
+          )}
+
+          <div className="setup-section">
+            <h2>📤 อัปโหลดรูปของคุณเอง</h2>
+            <label className="upload-big-btn">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                style={{ display: 'none' }}
+              />
+              <span className="icon">📷</span>
+              <span className="text">เลือกรูปภาพ</span>
+              <span className="hint">รองรับ JPG, PNG</span>
+            </label>
+          </div>
+
+          {coloringImages.length === 0 && (
+            <div className="no-images-hint">
+              <p>💡 ยังไม่มีรูประบายสีจากครู</p>
+              <small>อัปโหลดรูปของคุณเองได้เลย</small>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="coloring-page">
       <div className="coloring-header">
         <h1>🎨 ระบายสี</h1>
-        <button className="back-btn" onClick={() => window.history.back()}>
-          ← กลับ
-        </button>
+        <div className="header-actions">
+          <button className="change-image-btn" onClick={() => setIsStarted(false)}>
+            🖼️ เปลี่ยนรูป
+          </button>
+          <button className="back-btn" onClick={() => window.history.back()}>
+            ← กลับ
+          </button>
+        </div>
       </div>
 
       <div className="coloring-container">
@@ -115,15 +213,14 @@ function PlayColoring() {
           onSave={handleSave}
           showOutline={showOutline}
           onToggleOutline={() => setShowOutline(!showOutline)}
-          onImageUpload={handleImageUpload}
           isEraser={isEraser}
           onToggleEraser={() => setIsEraser(!isEraser)}
         />
 
         <div className="canvas-wrapper">
           <Stage
-            width={800}
-            height={600}
+            width={canvasSize.width}
+            height={canvasSize.height}
             onMouseDown={handleMouseDown}
             onMousemove={handleMouseMove}
             onMouseup={handleMouseUp}
@@ -137,8 +234,8 @@ function PlayColoring() {
               {image && showOutline && (
                 <KonvaImage
                   image={image}
-                  width={800}
-                  height={600}
+                  width={canvasSize.width}
+                  height={canvasSize.height}
                   opacity={0.3}
                 />
               )}

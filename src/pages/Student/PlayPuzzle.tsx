@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
 import { TouchBackend } from 'react-dnd-touch-backend'
 import PuzzleBoard from '../../components/PuzzleBoard'
 import { audioManager } from '../../utils/audio'
+import { getPuzzleConfigs } from '../../services/storage'
 import './PlayPuzzle.css'
 
 // Detect touch device
@@ -13,6 +14,13 @@ function PlayPuzzle() {
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('easy')
   const [imageUrl, setImageUrl] = useState<string>('')
   const [started, setStarted] = useState(false)
+  const [puzzleConfigs, setPuzzleConfigs] = useState<any[]>([])
+  const [selectedConfig, setSelectedConfig] = useState<string>('')
+
+  useEffect(() => {
+    const configs = getPuzzleConfigs()
+    setPuzzleConfigs(configs)
+  }, [])
 
   const handleDifficultySelect = (level: 'easy' | 'medium' | 'hard') => {
     setDifficulty(level)
@@ -27,6 +35,16 @@ function PlayPuzzle() {
         setImageUrl(event.target?.result as string)
       }
       reader.readAsDataURL(file)
+    }
+  }
+
+  const handleConfigSelect = (configId: string) => {
+    const config = puzzleConfigs.find(c => c.id === configId)
+    if (config) {
+      setSelectedConfig(configId)
+      setImageUrl(config.imageUrl)
+      setDifficulty(config.difficulty)
+      audioManager.playClick()
     }
   }
 
@@ -65,6 +83,28 @@ function PlayPuzzle() {
       </div>
 
       <div className="setup-container">
+        {puzzleConfigs.length > 0 && (
+          <div className="setup-card">
+            <h2>📦 เลือกชุดจิ๊กซอว์จากครู</h2>
+            <div className="config-list">
+              {puzzleConfigs.map(config => (
+                <div 
+                  key={config.id} 
+                  className={`config-item ${selectedConfig === config.id ? 'selected' : ''}`}
+                  onClick={() => handleConfigSelect(config.id)}
+                >
+                  <img src={config.imageUrl} alt={config.name} />
+                  <div className="config-info">
+                    <h3>{config.name}</h3>
+                    <span className="difficulty-badge">{config.difficulty === 'easy' ? 'ง่าย' : config.difficulty === 'medium' ? 'ปานกลาง' : 'ยาก'}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="divider">หรือ</div>
+          </div>
+        )}
+        
         <div className="setup-card">
           <h2>1. เลือกรูปภาพ</h2>
           <div className="upload-area">

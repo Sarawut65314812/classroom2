@@ -6,6 +6,9 @@ import PlayMatching from './pages/Student/PlayMatching'
 import PlayBeads from './pages/Student/PlayBeads'
 import PlayShadow from './pages/Student/PlayShadow'
 import Dashboard from './pages/Teacher/Dashboard'
+import ManageMatching from './pages/Teacher/ManageMatching'
+import ManageShadow from './pages/Teacher/ManageShadow'
+import ManagePuzzle from './pages/Teacher/ManagePuzzle'
 import './App.css'
 
 function App() {
@@ -19,6 +22,9 @@ function App() {
         <Route path="/beads" element={<PlayBeads />} />
         <Route path="/shadow" element={<PlayShadow />} />
         <Route path="/teacher" element={<Dashboard />} />
+        <Route path="/teacher/matching" element={<ManageMatching />} />
+        <Route path="/teacher/shadow" element={<ManageShadow />} />
+        <Route path="/teacher/puzzle" element={<ManagePuzzle />} />
       </Routes>
     </BrowserRouter>
   )

@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import ShadowMatchingBoard from '../../components/ShadowMatchingBoard'
 import { audioManager } from '../../utils/audio'
+import { getShadowItems } from '../../services/storage'
 import './PlayShadow.css'
 
 interface ShadowItem {
@@ -17,8 +18,68 @@ interface ShadowItem {
 function PlayShadow() {
   const [started, setStarted] = useState(false)
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('easy')
+  const [storedItems, setStoredItems] = useState<ShadowItem[]>([])
+  const [gameItems, setGameItems] = useState<ShadowItem[]>([])
 
-  // Sample data - ในการใช้งานจริงจะมาจาก API หรือ Teacher setup
+  useEffect(() => {
+    const items = getShadowItems()
+    setStoredItems(items.map(item => ({
+      ...item,
+      placed: false
+    })))
+  }, [])
+
+  // ฟังก์ชันสับเปลี่ยนตำแหน่งเงาให้ไม่ทับกัน
+  const shuffleShadowPositions = (items: ShadowItem[]): ShadowItem[] => {
+    const shuffled = [...items]
+    const minDistance = 150
+    const maxAttempts = 50
+
+    // สุ่มตำแหน่งเงาใหม่ให้ไม่ทับกัน
+    const newShadowPositions: Array<{x: number, y: number}> = []
+    
+    for (let i = 0; i < shuffled.length; i++) {
+      let attempts = 0
+      let validPosition = false
+      let shadowX = 0, shadowY = 0
+
+      while (!validPosition && attempts < maxAttempts) {
+        shadowX = Math.random() * 200 + 600
+        shadowY = Math.random() * 400 + 50
+
+        // ตรวจสอบว่าไม่ทับกับตำแหน่งที่มีอยู่
+        const tooClose = newShadowPositions.some(pos => {
+          const dist = Math.sqrt(Math.pow(pos.x - shadowX, 2) + Math.pow(pos.y - shadowY, 2))
+          return dist < minDistance
+        })
+
+        // ตรวจสอบว่าไม่ทับกับรูปจริง
+        const tooCloseToReal = shuffled.some(item => {
+          const dist = Math.sqrt(Math.pow(item.realX - shadowX, 2) + Math.pow(item.realY - shadowY, 2))
+          return dist < minDistance
+        })
+
+        if (!tooClose && !tooCloseToReal) {
+          validPosition = true
+        }
+        attempts++
+      }
+
+      newShadowPositions.push({x: shadowX, y: shadowY})
+    }
+
+    // สุ่มลำดับตำแหน่ง
+    const shuffledPositions = [...newShadowPositions].sort(() => Math.random() - 0.5)
+    
+    return shuffled.map((item, index) => ({
+      ...item,
+      shadowX: shuffledPositions[index].x,
+      shadowY: shuffledPositions[index].y,
+      placed: false
+    }))
+  }
+
+  // Sample data - fallback
   const generateItems = (count: number): ShadowItem[] => {
     const items: ShadowItem[] = []
     const emojis = ['🍎', '🍌', '🍇', '🍊', '🍓', '🥝', '🍑', '🍒', '🥭']
@@ -61,6 +122,10 @@ function PlayShadow() {
   const handleStart = () => {
     setStarted(true)
     audioManager.playClick()
+    
+    // สับเปลี่ยนตำแหน่งเงาก่อนเริ่มเกม
+    const itemsToUse = storedItems.length > 0 ? storedItems : generateItems(getDifficultyCount())
+    setGameItems(shuffleShadowPositions(itemsToUse))
   }
 
   const handleComplete = (score: number) => {
@@ -77,7 +142,7 @@ function PlayShadow() {
           </button>
         </div>
         <ShadowMatchingBoard
-          items={generateItems(getDifficultyCount())}
+          items={gameItems}
           onComplete={handleComplete}
         />
       </div>
@@ -94,6 +159,11 @@ function PlayShadow() {
       </div>
 
       <div className="setup-container">
+        {storedItems.length > 0 && (
+          <div className="info-banner">
+            ✅ พบ {storedItems.length} ชุดจากระบบครู
+          </div>
+        )}
         <div className="setup-card">
           <h2>วิธีเล่น</h2>
           <div className="instructions">

@@ -1,271 +1,332 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { 
+  getGames, 
+  updateGame, 
+  toggleGame,
+  getImages,
+  saveImage,
+  deleteImage,
+  getStudentProgress,
+  exportProgressCSV,
+  GameConfig,
+  ImageAsset
+} from '../../services/storage'
 import './Dashboard.css'
 
-interface Activity {
-  id: string
-  name: string
-  type: 'coloring' | 'puzzle'
-  imageUrl: string
-  difficulty?: string
-  createdAt: string
-}
-
-interface Student {
-  id: string
-  name: string
-  score: number
-  completedAt?: string
-}
+type Tab = 'games' | 'images' | 'progress'
 
 function Dashboard() {
-  const [activities, setActivities] = useState<Activity[]>([])
-  const [students] = useState<Student[]>([
-    { id: '1', name: 'น้องแมว', score: 95, completedAt: '2024-12-01' },
-    { id: '2', name: 'น้องหมา', score: 88, completedAt: '2024-12-01' },
-    { id: '3', name: 'น้องเป็ด', score: 92, completedAt: '2024-12-01' },
-  ])
-  const [showCreateForm, setShowCreateForm] = useState(false)
-  const [newActivity, setNewActivity] = useState({
-    name: '',
-    type: 'coloring' as 'coloring' | 'puzzle',
-    imageUrl: '',
-    difficulty: 'easy'
-  })
+  const navigate = useNavigate()
+  const [activeTab, setActiveTab] = useState<Tab>('games')
+  const [games, setGames] = useState<GameConfig[]>([])
+  const [images, setImages] = useState<ImageAsset[]>([])
+  const [progress, setProgress] = useState<any[]>([])
+  const [editingGame, setEditingGame] = useState<string | null>(null)
+  const [editForm, setEditForm] = useState<Partial<GameConfig>>({})
 
   useEffect(() => {
-    loadActivities()
-  }, [])
+    loadData()
+  }, [activeTab])
 
-  const loadActivities = async () => {
-    try {
-      // Mock data for demo
-      setActivities([
-        {
-          id: '1',
-          name: 'ระบายสีสัตว์',
-          type: 'coloring',
-          imageUrl: 'https://via.placeholder.com/200',
-          createdAt: '2024-12-01'
-        },
-        {
-          id: '2',
-          name: 'จิ๊กซอว์ผลไม้',
-          type: 'puzzle',
-          imageUrl: 'https://via.placeholder.com/200',
-          difficulty: 'easy',
-          createdAt: '2024-12-01'
-        }
-      ])
-    } catch (error) {
-      console.error('Error loading activities:', error)
+  const loadData = () => {
+    setGames(getGames())
+    setImages(getImages())
+    setProgress(getStudentProgress())
+  }
+
+  // === Game Management ===
+  const handleToggleGame = (gameId: string) => {
+    toggleGame(gameId)
+    loadData()
+  }
+
+  const startEdit = (game: GameConfig) => {
+    setEditingGame(game.id)
+    setEditForm(game)
+  }
+
+  const saveEdit = () => {
+    if (editingGame && editForm) {
+      updateGame(editingGame, editForm)
+      setEditingGame(null)
+      setEditForm({})
+      loadData()
     }
   }
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const cancelEdit = () => {
+    setEditingGame(null)
+    setEditForm({})
+  }
+
+  const moveGame = (gameId: string, direction: 'up' | 'down') => {
+    const sorted = [...games].sort((a, b) => a.order - b.order)
+    const index = sorted.findIndex(g => g.id === gameId)
+    if (index === -1) return
+    
+    const newIndex = direction === 'up' ? index - 1 : index + 1
+    if (newIndex < 0 || newIndex >= sorted.length) return
+
+    // Swap orders
+    const temp = sorted[index].order
+    updateGame(sorted[index].id, { order: sorted[newIndex].order })
+    updateGame(sorted[newIndex].id, { order: temp })
+    loadData()
+  }
+
+  // === Image Management ===
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, category: ImageAsset['category']) => {
     const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onload = (event) => {
-        setNewActivity({ ...newActivity, imageUrl: event.target?.result as string })
-      }
-      reader.readAsDataURL(file)
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const url = event.target?.result as string
+      saveImage({
+        name: file.name,
+        url,
+        category
+      })
+      loadData()
     }
+    reader.readAsDataURL(file)
   }
 
-  const handleCreateActivity = async () => {
-    if (!newActivity.name || !newActivity.imageUrl) {
-      alert('กรุณากรอกข้อมูลให้ครบถ้วน')
-      return
+  const handleDeleteImage = (imageId: string) => {
+    if (confirm('ต้องการลบรูปนี้หรือไม่?')) {
+      deleteImage(imageId)
+      loadData()
     }
-
-    try {
-      const activity: Activity = {
-        id: Date.now().toString(),
-        ...newActivity,
-        createdAt: new Date().toISOString()
-      }
-      setActivities([...activities, activity])
-      setShowCreateForm(false)
-      setNewActivity({ name: '', type: 'coloring', imageUrl: '', difficulty: 'easy' })
-      alert('สร้างกิจกรรมสำเร็จ! 🎉')
-    } catch (error) {
-      console.error('Error creating activity:', error)
-      alert('เกิดข้อผิดพลาด')
-    }
-  }
-
-  const exportCSV = () => {
-    const csv = [
-      ['ชื่อ', 'คะแนน', 'วันที่ทำเสร็จ'],
-      ...students.map(s => [s.name, s.score, s.completedAt || '-'])
-    ].map(row => row.join(',')).join('\n')
-
-    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
-    link.href = URL.createObjectURL(blob)
-    link.download = `students-${Date.now()}.csv`
-    link.click()
   }
 
   return (
     <div className="dashboard">
       <div className="dashboard-header">
-        <h1>👩‍🏫 หน้าครู - จัดการห้องเรียน</h1>
+        <h1>👩‍🏫 จัดการห้องเรียน</h1>
         <button className="back-btn" onClick={() => window.history.back()}>
           ← กลับหน้าหลัก
         </button>
       </div>
 
+      {/* Advanced Management Links */}
+      <div className="management-links">
+        <h3>🛠️ การจัดการขั้นสูง</h3>
+        <div className="links-grid">
+          <button className="link-card" onClick={() => navigate('/teacher/matching')}>
+            <span className="icon">🔗</span>
+            <span className="title">จัดการเกมจับคู่</span>
+            <span className="desc">เพิ่ม/แก้ไข คู่รูปภาพ</span>
+          </button>
+          <button className="link-card" onClick={() => navigate('/teacher/shadow')}>
+            <span className="icon">🌓</span>
+            <span className="title">จัดการเกมจับเงา</span>
+            <span className="desc">เพิ่ม/แก้ไข รูปกับเงา</span>
+          </button>
+          <button className="link-card" onClick={() => navigate('/teacher/puzzle')}>
+            <span className="icon">🧩</span>
+            <span className="title">จัดการเกมจิ๊กซอว์</span>
+            <span className="desc">สร้างชุดจิ๊กซอว์</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="dashboard-tabs">
+        <button 
+          className={`tab-btn ${activeTab === 'games' ? 'active' : ''}`}
+          onClick={() => setActiveTab('games')}
+        >
+          🎮 จัดการเกม
+        </button>
+        <button 
+          className={`tab-btn ${activeTab === 'images' ? 'active' : ''}`}
+          onClick={() => setActiveTab('images')}
+        >
+          🖼️ คลังรูปภาพ
+        </button>
+        <button 
+          className={`tab-btn ${activeTab === 'progress' ? 'active' : ''}`}
+          onClick={() => setActiveTab('progress')}
+        >
+          📊 สถิติการเรียน
+        </button>
+      </div>
+
       <div className="dashboard-content">
-        {/* Activities Section */}
-        <section className="dashboard-section">
-          <div className="section-header">
-            <h2>📚 กิจกรรมทั้งหมด</h2>
-            <button
-              className="create-btn"
-              onClick={() => setShowCreateForm(!showCreateForm)}
-            >
-              {showCreateForm ? '❌ ยกเลิก' : '➕ สร้างกิจกรรมใหม่'}
-            </button>
-          </div>
-
-          {showCreateForm && (
-            <div className="create-form fade-in">
-              <h3>สร้างกิจกรรมใหม่</h3>
-              
-              <div className="form-group">
-                <label>ชื่อกิจกรรม</label>
-                <input
-                  type="text"
-                  value={newActivity.name}
-                  onChange={(e) => setNewActivity({ ...newActivity, name: e.target.value })}
-                  placeholder="เช่น ระบายสีสัตว์"
-                  className="form-input"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>ประเภทเกม</label>
-                <select
-                  value={newActivity.type}
-                  onChange={(e) => setNewActivity({ ...newActivity, type: e.target.value as any })}
-                  className="form-select"
-                >
-                  <option value="coloring">🎨 ระบายสี</option>
-                  <option value="puzzle">🧩 จิ๊กซอว์</option>
-                </select>
-              </div>
-
-              {newActivity.type === 'puzzle' && (
-                <div className="form-group">
-                  <label>ความยาก</label>
-                  <select
-                    value={newActivity.difficulty}
-                    onChange={(e) => setNewActivity({ ...newActivity, difficulty: e.target.value })}
-                    className="form-select"
-                  >
-                    <option value="easy">ง่าย (3×3)</option>
-                    <option value="medium">ปานกลาง (4×4)</option>
-                    <option value="hard">ยาก (5×5)</option>
-                  </select>
+        {/* Games Tab */}
+        {activeTab === 'games' && (
+          <div className="games-management">
+            <h2>จัดการเกมที่แสดงในหน้าหลัก</h2>
+            <div className="games-list">
+              {games.sort((a, b) => a.order - b.order).map(game => (
+                <div key={game.id} className={`game-item ${!game.enabled ? 'disabled' : ''}`}>
+                  {editingGame === game.id ? (
+                    <div className="game-edit-form">
+                      <input
+                        type="text"
+                        value={editForm.name || ''}
+                        onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                        placeholder="ชื่อเกม"
+                      />
+                      <input
+                        type="text"
+                        value={editForm.icon || ''}
+                        onChange={(e) => setEditForm({ ...editForm, icon: e.target.value })}
+                        placeholder="ไอคอน (emoji)"
+                        maxLength={2}
+                      />
+                      <textarea
+                        value={editForm.description || ''}
+                        onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                        placeholder="คำอธิบาย"
+                        rows={2}
+                      />
+                      <div className="edit-actions">
+                        <button onClick={saveEdit} className="save-btn">✅ บันทึก</button>
+                        <button onClick={cancelEdit} className="cancel-btn">❌ ยกเลิก</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="game-info">
+                        <span className="game-icon-large">{game.icon}</span>
+                        <div>
+                          <h3>{game.name}</h3>
+                          <p>{game.description}</p>
+                        </div>
+                      </div>
+                      <div className="game-actions">
+                        <button onClick={() => moveGame(game.id, 'up')} title="เลื่อนขึ้น">⬆️</button>
+                        <button onClick={() => moveGame(game.id, 'down')} title="เลื่อนลง">⬇️</button>
+                        <button onClick={() => startEdit(game)} className="edit-btn">✏️ แก้ไข</button>
+                        <button 
+                          onClick={() => handleToggleGame(game.id)}
+                          className={game.enabled ? 'toggle-btn enabled' : 'toggle-btn disabled'}
+                        >
+                          {game.enabled ? '👁️ แสดง' : '🚫 ซ่อน'}
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
-              )}
+              ))}
+            </div>
+          </div>
+        )}
 
-              <div className="form-group">
-                <label>อัปโหลดรูปภาพ</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="form-file"
-                />
-                {newActivity.imageUrl && (
-                  <img src={newActivity.imageUrl} alt="Preview" className="preview-img" />
-                )}
+        {/* Images Tab */}
+        {activeTab === 'images' && (
+          <div className="images-management">
+            <h2>คลังรูปภาพ</h2>
+            
+            <div className="upload-section">
+              <h3>อัปโหลดรูปใหม่</h3>
+              <div className="upload-categories">
+                {(['coloring', 'puzzle', 'matching', 'shadow', 'other'] as const).map(category => (
+                  <div key={category} className="upload-box">
+                    <label className="upload-label">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleImageUpload(e, category)}
+                        style={{ display: 'none' }}
+                      />
+                      <div className="upload-placeholder">
+                        <span className="upload-icon">📤</span>
+                        <p>{category === 'coloring' ? 'ระบายสี' : 
+                            category === 'puzzle' ? 'จิ๊กซอว์' :
+                            category === 'matching' ? 'จับคู่' :
+                            category === 'shadow' ? 'เงา' : 'อื่นๆ'}</p>
+                      </div>
+                    </label>
+                  </div>
+                ))}
               </div>
+            </div>
 
-              <button className="submit-btn" onClick={handleCreateActivity}>
-                ✅ สร้างกิจกรรม
+            <div className="images-gallery">
+              {(['coloring', 'puzzle', 'matching', 'shadow', 'other'] as const).map(category => {
+                const categoryImages = images.filter(img => img.category === category)
+                if (categoryImages.length === 0) return null
+                
+                return (
+                  <div key={category} className="category-section">
+                    <h3>
+                      {category === 'coloring' ? '🎨 ระบายสี' : 
+                       category === 'puzzle' ? '🧩 จิ๊กซอว์' :
+                       category === 'matching' ? '🎯 จับคู่' :
+                       category === 'shadow' ? '🌙 เงา' : '📁 อื่นๆ'}
+                      <span className="count">({categoryImages.length})</span>
+                    </h3>
+                    <div className="images-grid">
+                      {categoryImages.map(img => (
+                        <div key={img.id} className="image-card">
+                          <img src={img.url} alt={img.name} />
+                          <div className="image-overlay">
+                            <p className="image-name">{img.name}</p>
+                            <button 
+                              onClick={() => handleDeleteImage(img.id)}
+                              className="delete-image-btn"
+                            >
+                              🗑️ ลบ
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Progress Tab */}
+        {activeTab === 'progress' && (
+          <div className="progress-management">
+            <div className="progress-header">
+              <h2>สถิติการเรียน</h2>
+              <button onClick={exportProgressCSV} className="export-btn">
+                📊 Export CSV
               </button>
             </div>
-          )}
 
-          <div className="activities-grid">
-            {activities.map(activity => (
-              <div key={activity.id} className="activity-card">
-                <img src={activity.imageUrl} alt={activity.name} />
-                <div className="activity-info">
-                  <h3>{activity.name}</h3>
-                  <p>
-                    {activity.type === 'coloring' ? '🎨 ระบายสี' : '🧩 จิ๊กซอว์'}
-                    {activity.difficulty && ` - ${activity.difficulty}`}
-                  </p>
-                  <small>{new Date(activity.createdAt).toLocaleDateString('th-TH')}</small>
-                </div>
+            {progress.length === 0 ? (
+              <div className="empty-state">
+                <p>ยังไม่มีข้อมูลการเล่นเกม</p>
+                <small>ข้อมูลจะแสดงเมื่อนักเรียนเล่นเกมเสร็จ</small>
               </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Students Section */}
-        <section className="dashboard-section">
-          <div className="section-header">
-            <h2>👥 นักเรียนและคะแนน</h2>
-            <button className="export-btn" onClick={exportCSV}>
-              📊 Export CSV
-            </button>
-          </div>
-
-          <div className="students-table-wrapper">
-            <table className="students-table">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>ชื่อนักเรียน</th>
-                  <th>คะแนน</th>
-                  <th>วันที่ทำเสร็จ</th>
-                  <th>สถานะ</th>
-                </tr>
-              </thead>
-              <tbody>
-                {students.map((student, index) => (
-                  <tr key={student.id}>
-                    <td>{index + 1}</td>
-                    <td>{student.name}</td>
-                    <td>
-                      <div className="score-badge">{student.score}</div>
-                    </td>
-                    <td>{student.completedAt || '-'}</td>
-                    <td>
-                      <span className={`status-badge ${student.score >= 80 ? 'pass' : 'fail'}`}>
-                        {student.score >= 80 ? '✅ ผ่าน' : '⏳ รอ'}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-        {/* Gallery Section */}
-        <section className="dashboard-section">
-          <div className="section-header">
-            <h2>🖼️ คลังรูปภาพ</h2>
-            <button className="upload-btn">
-              📤 อัปโหลดรูปใหม่
-            </button>
-          </div>
-          
-          <div className="gallery-grid">
-            {[1, 2, 3, 4, 5, 6].map(i => (
-              <div key={i} className="gallery-item">
-                <img src={`https://via.placeholder.com/150`} alt={`Gallery ${i}`} />
-                <button className="delete-btn">🗑️</button>
+            ) : (
+              <div className="progress-table-wrapper">
+                <table className="progress-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>ชื่อนักเรียน</th>
+                      <th>เกม</th>
+                      <th>คะแนน</th>
+                      <th>เวลาที่เล่น</th>
+                      <th>ใช้เวลา</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {progress.map((p, index) => (
+                      <tr key={index}>
+                        <td>{index + 1}</td>
+                        <td>{p.studentName}</td>
+                        <td>{p.gameName}</td>
+                        <td><span className="score-badge">{p.score}</span></td>
+                        <td>{new Date(p.completedAt).toLocaleString('th-TH')}</td>
+                        <td>{Math.floor(p.duration / 60)}:{(p.duration % 60).toString().padStart(2, '0')}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            ))}
+            )}
           </div>
-        </section>
+        )}
       </div>
     </div>
   )

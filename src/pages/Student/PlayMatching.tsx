@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import MatchingBoard from '../../components/MatchingBoard'
 import { audioManager } from '../../utils/audio'
+import { getMatchingPairs } from '../../services/storage'
 import './PlayMatching.css'
 
 interface MatchPair {
@@ -14,9 +15,20 @@ interface MatchPair {
 function PlayMatching() {
   const [started, setStarted] = useState(false)
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('easy')
-  const [customPairs] = useState<MatchPair[]>([])
+  const [storedPairs, setStoredPairs] = useState<MatchPair[]>([])
 
-  // Sample pairs for demo
+  useEffect(() => {
+    const pairs = getMatchingPairs()
+    setStoredPairs(pairs.map(p => ({
+      id: parseInt(p.id),
+      leftImage: p.leftImage,
+      rightImage: p.rightImage,
+      leftText: p.leftText,
+      rightText: p.rightText
+    })))
+  }, [])
+
+  // Sample pairs for demo (fallback)
   const samplePairs: { [key: string]: MatchPair[] } = {
     easy: [
       { id: 1, leftImage: 'https://via.placeholder.com/100/FF6B6B/fff?text=🍎', rightImage: 'https://via.placeholder.com/100/FF6B6B/fff?text=แอปเปิ้ล', leftText: '🍎', rightText: 'แอปเปิ้ล' },
@@ -60,7 +72,7 @@ function PlayMatching() {
           </button>
         </div>
         <MatchingBoard
-          pairs={customPairs.length > 0 ? customPairs : samplePairs[difficulty]}
+          pairs={storedPairs.length > 0 ? storedPairs : samplePairs[difficulty]}
           onComplete={handleComplete}
         />
       </div>
@@ -77,6 +89,11 @@ function PlayMatching() {
       </div>
 
       <div className="setup-container">
+        {storedPairs.length > 0 && (
+          <div className="info-banner">
+            ✅ พบ {storedPairs.length} คู่จากระบบครู
+          </div>
+        )}
         <div className="setup-card">
           <h2>เลือกระดับความยาก</h2>
           <div className="difficulty-buttons">

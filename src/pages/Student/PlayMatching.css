@@ -22,6 +22,18 @@
   margin: 0 auto;
 }
 
+.info-banner {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  color: white;
+  padding: 15px 25px;
+  border-radius: 15px;
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 15px rgba(17, 153, 142, 0.3);
+}
+
 .setup-card {
   background: white;
   border-radius: 20px;

@@ -11,7 +11,6 @@ interface ToolboxProps {
   onSave: () => void
   showOutline: boolean
   onToggleOutline: () => void
-  onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void
   isEraser: boolean
   onToggleEraser: () => void
 }
@@ -33,7 +32,6 @@ function Toolbox({
   onSave,
   showOutline,
   onToggleOutline,
-  onImageUpload,
   isEraser,
   onToggleEraser
 }: ToolboxProps) {
@@ -46,16 +44,6 @@ function Toolbox({
   return (
     <div className="toolbox">
       <h3>🎨 เครื่องมือ</h3>
-      
-      <div className="tool-section">
-        <label>📸 อัปโหลดรูป</label>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={onImageUpload}
-          className="file-input"
-        />
-      </div>
 
       <div className="tool-section">
         <label>🎨 เลือกสี</label>
