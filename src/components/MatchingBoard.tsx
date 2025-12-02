@@ -4,7 +4,7 @@ import { audioManager } from '../utils/audio'
 import './MatchingBoard.css'
 
 interface MatchPair {
-  id: number
+  id: string
   leftImage: string
   rightImage: string
   leftText?: string
@@ -12,10 +12,10 @@ interface MatchPair {
 }
 
 interface DrawnLine {
-  id: number
+  id: string
   points: number[]
-  fromId: number
-  toId: number
+  fromId: string
+  toId: string
   isCorrect: boolean
   color: string
 }
@@ -29,9 +29,9 @@ function MatchingBoard({ pairs, onComplete }: MatchingBoardProps) {
   const [images, setImages] = useState<Map<string, HTMLImageElement>>(new Map())
   const [lines, setLines] = useState<DrawnLine[]>([])
   const [currentLine, setCurrentLine] = useState<number[] | null>(null)
-  const [matchedPairs, setMatchedPairs] = useState<Set<number>>(new Set())
+  const [matchedPairs, setMatchedPairs] = useState<Set<string>>(new Set())
   const [isDrawing, setIsDrawing] = useState(false)
-  const [startPoint, setStartPoint] = useState<{ id: number; x: number; y: number } | null>(null)
+  const [startPoint, setStartPoint] = useState<{ id: string; x: number; y: number } | null>(null)
   const [showSuccess, setShowSuccess] = useState(false)
   const stageRef = useRef<any>(null)
 
@@ -42,28 +42,24 @@ function MatchingBoard({ pairs, onComplete }: MatchingBoardProps) {
   const RIGHT_X = 800
 
   useEffect(() => {
-    // Load all images
     const loadImages = async () => {
       const imageMap = new Map<string, HTMLImageElement>()
-      
       for (const pair of pairs) {
         if (pair.leftImage) {
-          const img = new Image()
+          const img = new window.Image()
           img.src = pair.leftImage
           await new Promise((resolve) => { img.onload = resolve })
           imageMap.set(`left-${pair.id}`, img)
         }
         if (pair.rightImage) {
-          const img = new Image()
+          const img = new window.Image()
           img.src = pair.rightImage
           await new Promise((resolve) => { img.onload = resolve })
           imageMap.set(`right-${pair.id}`, img)
         }
       }
-      
       setImages(imageMap)
     }
-    
     loadImages()
   }, [pairs])
 
@@ -76,6 +72,8 @@ function MatchingBoard({ pairs, onComplete }: MatchingBoardProps) {
       }, 2000)
     }
   }, [matchedPairs, pairs.length])
+
+  // ...rest of code unchanged...
 
   const handleReset = () => {
     setLines([])
@@ -144,7 +142,7 @@ function MatchingBoard({ pairs, onComplete }: MatchingBoardProps) {
         if (isCorrect) {
           // Correct match
           const newLine: DrawnLine = {
-            id: Date.now(),
+            id: Date.now().toString(),
             points: currentLine,
             fromId: startPoint.id,
             toId: pair.id,
@@ -160,7 +158,7 @@ function MatchingBoard({ pairs, onComplete }: MatchingBoardProps) {
           audioManager.playFail()
           // Show red line briefly then remove
           const errorLine: DrawnLine = {
-            id: Date.now(),
+            id: Date.now().toString(),
             points: currentLine,
             fromId: startPoint.id,
             toId: pair.id,

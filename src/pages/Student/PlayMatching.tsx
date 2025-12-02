@@ -5,7 +5,7 @@ import { getMatchingPairs } from '../../services/storage'
 import './PlayMatching.css'
 
 interface MatchPair {
-  id: number
+  id: string
   leftImage: string
   rightImage: string
   leftText?: string
@@ -19,8 +19,8 @@ function PlayMatching() {
 
   useEffect(() => {
     const pairs = getMatchingPairs()
-    setStoredPairs(pairs.map(p => ({
-      id: parseInt(p.id),
+      setStoredPairs(pairs.map(p => ({
+        id: p.id.toString(),
       leftImage: p.leftImage,
       rightImage: p.rightImage,
       leftText: p.leftText,
@@ -31,25 +31,25 @@ function PlayMatching() {
   // Sample pairs for demo (fallback)
   const samplePairs: { [key: string]: MatchPair[] } = {
     easy: [
-      { id: 1, leftImage: 'https://via.placeholder.com/100/FF6B6B/fff?text=🍎', rightImage: 'https://via.placeholder.com/100/FF6B6B/fff?text=แอปเปิ้ล', leftText: '🍎', rightText: 'แอปเปิ้ล' },
-      { id: 2, leftImage: 'https://via.placeholder.com/100/4ECDC4/fff?text=🍌', rightImage: 'https://via.placeholder.com/100/4ECDC4/fff?text=กล้วย', leftText: '🍌', rightText: 'กล้วย' },
-      { id: 3, leftImage: 'https://via.placeholder.com/100/45B7D1/fff?text=🍇', rightImage: 'https://via.placeholder.com/100/45B7D1/fff?text=องุ่น', leftText: '🍇', rightText: 'องุ่น' }
+      { id: "1", leftImage: 'https://via.placeholder.com/100/FF6B6B/fff?text=🍎', rightImage: 'https://via.placeholder.com/100/FF6B6B/fff?text=แอปเปิ้ล', leftText: '🍎', rightText: 'แอปเปิ้ล' },
+      { id: "2", leftImage: 'https://via.placeholder.com/100/4ECDC4/fff?text=🍌', rightImage: 'https://via.placeholder.com/100/4ECDC4/fff?text=กล้วย', leftText: '🍌', rightText: 'กล้วย' },
+      { id: "3", leftImage: 'https://via.placeholder.com/100/45B7D1/fff?text=🍇', rightImage: 'https://via.placeholder.com/100/45B7D1/fff?text=องุ่น', leftText: '🍇', rightText: 'องุ่น' }
     ],
     medium: [
-      { id: 1, leftImage: 'https://via.placeholder.com/100/FF6B6B/fff?text=1', rightImage: 'https://via.placeholder.com/100/FF6B6B/fff?text=One', leftText: '1', rightText: 'One' },
-      { id: 2, leftImage: 'https://via.placeholder.com/100/4ECDC4/fff?text=2', rightImage: 'https://via.placeholder.com/100/4ECDC4/fff?text=Two', leftText: '2', rightText: 'Two' },
-      { id: 3, leftImage: 'https://via.placeholder.com/100/45B7D1/fff?text=3', rightImage: 'https://via.placeholder.com/100/45B7D1/fff?text=Three', leftText: '3', rightText: 'Three' },
-      { id: 4, leftImage: 'https://via.placeholder.com/100/F7DC6F/000?text=4', rightImage: 'https://via.placeholder.com/100/F7DC6F/000?text=Four', leftText: '4', rightText: 'Four' },
-      { id: 5, leftImage: 'https://via.placeholder.com/100/BB8FCE/fff?text=5', rightImage: 'https://via.placeholder.com/100/BB8FCE/fff?text=Five', leftText: '5', rightText: 'Five' }
+      { id: "1", leftImage: 'https://via.placeholder.com/100/FF6B6B/fff?text=1', rightImage: 'https://via.placeholder.com/100/FF6B6B/fff?text=One', leftText: '1', rightText: 'One' },
+      { id: "2", leftImage: 'https://via.placeholder.com/100/4ECDC4/fff?text=2', rightImage: 'https://via.placeholder.com/100/4ECDC4/fff?text=Two', leftText: '2', rightText: 'Two' },
+      { id: "3", leftImage: 'https://via.placeholder.com/100/45B7D1/fff?text=3', rightImage: 'https://via.placeholder.com/100/45B7D1/fff?text=Three', leftText: '3', rightText: 'Three' },
+      { id: "4", leftImage: 'https://via.placeholder.com/100/F7DC6F/000?text=4', rightImage: 'https://via.placeholder.com/100/F7DC6F/000?text=Four', leftText: '4', rightText: 'Four' },
+      { id: "5", leftImage: 'https://via.placeholder.com/100/BB8FCE/fff?text=5', rightImage: 'https://via.placeholder.com/100/BB8FCE/fff?text=Five', leftText: '5', rightText: 'Five' }
     ],
     hard: [
-      { id: 1, leftImage: 'https://via.placeholder.com/100/FF6B6B/fff?text=🐶', rightImage: 'https://via.placeholder.com/100/FF6B6B/fff?text=Dog', leftText: '🐶', rightText: 'Dog' },
-      { id: 2, leftImage: 'https://via.placeholder.com/100/4ECDC4/fff?text=🐱', rightImage: 'https://via.placeholder.com/100/4ECDC4/fff?text=Cat', leftText: '🐱', rightText: 'Cat' },
-      { id: 3, leftImage: 'https://via.placeholder.com/100/45B7D1/fff?text=🐭', rightImage: 'https://via.placeholder.com/100/45B7D1/fff?text=Mouse', leftText: '🐭', rightText: 'Mouse' },
-      { id: 4, leftImage: 'https://via.placeholder.com/100/F7DC6F/000?text=🐰', rightImage: 'https://via.placeholder.com/100/F7DC6F/000?text=Rabbit', leftText: '🐰', rightText: 'Rabbit' },
-      { id: 5, leftImage: 'https://via.placeholder.com/100/BB8FCE/fff?text=🐻', rightImage: 'https://via.placeholder.com/100/BB8FCE/fff?text=Bear', leftText: '🐻', rightText: 'Bear' },
-      { id: 6, leftImage: 'https://via.placeholder.com/100/85C1E2/fff?text=🐼', rightImage: 'https://via.placeholder.com/100/85C1E2/fff?text=Panda', leftText: '🐼', rightText: 'Panda' },
-      { id: 7, leftImage: 'https://via.placeholder.com/100/F8B88B/000?text=🦊', rightImage: 'https://via.placeholder.com/100/F8B88B/000?text=Fox', leftText: '🦊', rightText: 'Fox' }
+      { id: "1", leftImage: 'https://via.placeholder.com/100/FF6B6B/fff?text=🐶', rightImage: 'https://via.placeholder.com/100/FF6B6B/fff?text=Dog', leftText: '🐶', rightText: 'Dog' },
+      { id: "2", leftImage: 'https://via.placeholder.com/100/4ECDC4/fff?text=🐱', rightImage: 'https://via.placeholder.com/100/4ECDC4/fff?text=Cat', leftText: '🐱', rightText: 'Cat' },
+      { id: "3", leftImage: 'https://via.placeholder.com/100/45B7D1/fff?text=🐭', rightImage: 'https://via.placeholder.com/100/45B7D1/fff?text=Mouse', leftText: '🐭', rightText: 'Mouse' },
+      { id: "4", leftImage: 'https://via.placeholder.com/100/F7DC6F/000?text=🐰', rightImage: 'https://via.placeholder.com/100/F7DC6F/000?text=Rabbit', leftText: '🐰', rightText: 'Rabbit' },
+      { id: "5", leftImage: 'https://via.placeholder.com/100/BB8FCE/fff?text=🐻', rightImage: 'https://via.placeholder.com/100/BB8FCE/fff?text=Bear', leftText: '🐻', rightText: 'Bear' },
+      { id: "6", leftImage: 'https://via.placeholder.com/100/85C1E2/fff?text=🐼', rightImage: 'https://via.placeholder.com/100/85C1E2/fff?text=Panda', leftText: '🐼', rightText: 'Panda' },
+      { id: "7", leftImage: 'https://via.placeholder.com/100/F8B88B/000?text=🦊', rightImage: 'https://via.placeholder.com/100/F8B88B/000?text=Fox', leftText: '🦊', rightText: 'Fox' }
     ]
   }
 
